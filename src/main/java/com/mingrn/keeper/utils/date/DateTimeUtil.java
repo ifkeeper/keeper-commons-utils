@@ -3,6 +3,8 @@ package com.mingrn.keeper.utils.date;
 import com.mingrn.keeper.utils.enums.DateTimeEnums;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
+import org.joda.time.Days;
+import org.joda.time.Seconds;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
@@ -71,5 +73,23 @@ public class DateTimeUtil {
         }
         DateTime dateTime = new DateTime(date);
         return dateTime.toString(enums.getFormatStr());
+    }
+
+
+    /**
+     * 时间大小比较
+     * <p>
+     * date1 大于 date2 返回 1
+     * date1 小于 date2 返回 -1
+     * data1 等于 date2 返回 0
+     *
+     * @param target 目标时间
+     * @param refer  参考时间
+     * @return date1 > date2
+     */
+    public static boolean compare(Date target, Date refer) {
+        DateTime dateTime1 = new DateTime(target);
+        DateTime dateTime2 = new DateTime(refer);
+        return dateTime1.compareTo(dateTime2) > 0;
     }
 }
