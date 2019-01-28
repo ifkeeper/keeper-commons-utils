@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 消息转换工具类
+ * XML Map 转换工具
  *
  * @author MinGRn
  */
