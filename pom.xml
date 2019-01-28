@@ -14,7 +14,24 @@
     </parent>
 
     <properties>
+        <!--解析 XML-->
+        <dem4j.version>1.6.1</dem4j.version>
+        <!-- xstream -->
+        <xstream.version>1.4.10</xstream.version>
     </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.directory.studio</groupId>
+            <artifactId>org.dom4j.dom4j</artifactId>
+            <version>${dem4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.thoughtworks.xstream</groupId>
+            <artifactId>xstream</artifactId>
+            <version>${xstream.version}</version>
+        </dependency>
+    </dependencies>
 
     <build>
         <plugins>
