@@ -9,7 +9,7 @@ import java.util.UUID;
  */
 class UUIDGenerator implements Generator {
 
-	private static Generator generator = new UUIDGenerator();
+	private static final Generator INSTANCE = new UUIDGenerator();
 
 	private UUIDGenerator() {
 	}
@@ -20,7 +20,7 @@ class UUIDGenerator implements Generator {
 	 * @see GeneratorIDFactory
 	 */
 	protected static Generator getInstance() {
-		return generator;
+		return INSTANCE;
 	}
 
 	/**
