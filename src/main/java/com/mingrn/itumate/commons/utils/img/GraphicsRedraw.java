@@ -12,14 +12,14 @@ import java.io.*;
 import java.util.Iterator;
 
 /**
- * 图片重绘实现类
+ * 图形重绘
  *
  * @author MinGRn <br > MinGRn97@gmail.com
  * @date 2019/3/12 15:44
  */
-public class ImgRedrawImpl implements ImgRedraw {
+public class GraphicsRedraw implements Redraw {
 
-	private ImgRedrawImpl() {
+	private GraphicsRedraw() {
 	}
 
 	/**
@@ -39,8 +39,22 @@ public class ImgRedrawImpl implements ImgRedraw {
 	/**
 	 * return this.class Instance
 	 */
-	public static final ImgRedraw INSTANCE = new ImgRedrawImpl();
+	public static final Redraw INSTANCE = new GraphicsRedraw();
 
+	@Override
+	public InputStream redraw(File file) throws IOException {
+		return redraw(file, DEFAULT_WIDTH, DEFAULT_HEIGHT, DEFAULT_QUALITY);
+	}
+
+	@Override
+	public InputStream redraw(InputStream inputStream) throws IOException {
+		return redraw(inputStream, DEFAULT_WIDTH, DEFAULT_HEIGHT, DEFAULT_QUALITY);
+	}
+
+	@Override
+	public InputStream redraw(BufferedImage bufferedImage) {
+		return redraw(bufferedImage, DEFAULT_WIDTH, DEFAULT_HEIGHT, DEFAULT_QUALITY);
+	}
 
 	@Override
 	public InputStream redraw(File file, int maxWidth, int maxHeight, float quality) throws IOException {
