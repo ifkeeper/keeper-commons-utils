@@ -13,6 +13,25 @@ import java.util.concurrent.*;
 
 /**
  * 强安全密码生成类
+ * <p>
+ * 使用示例:
+ * <pre>{@code
+ *   // 生成默认级别密码
+ *   // 密码默认长度为8,包含的字符:字母(区分大小写)、数值和特殊字符
+ *   String pwd = SecurePasswordGenerator.INSTANCE.generate();
+ *
+ *   // 指定长度密码
+ *   // 密码的最小长度为8,最大长度为64
+ *   int pwdLen = 10;
+ *   String pwd = SecurePasswordGenerator.INSTANCE.generate(pwdLen);
+ *
+ *   // 指定密码长度与字符类型
+ *   // 字符类型包括26英文字母(区分大消息)、数值、特殊字符
+ *   // 当指定密码字符类型为1时,会进行排除数值与特殊字符
+ *   // 这里指定的类型为 3,则生成的密码最多包括的字符类型有上面四种的其中三种
+ *   int pwdLen = 10, characterVarious = 3;
+ *   String pwd = SecurePasswordGenerator.INSTANCE.generate(pwdLen);
+ *  }</pre>
  *
  * @author MinGRn <br > MinGRn97@gmail.com
  * @date 2019/7/2 18:27
@@ -75,6 +94,9 @@ public enum SecurePasswordGenerator {
         return generate(DEFAULT_PASSWORD_LEN);
     }
 
+    /**
+     * @param passwordLen 密码长度
+     */
     public String generate(int passwordLen) {
         return generate(passwordLen, MAX_CHARACTER_VARIOUS);
     }
@@ -155,7 +177,7 @@ public enum SecurePasswordGenerator {
      */
     private Character generateSeed(CharacterType type) {
         int seed;
-        Character c = null;
+        char c;
         switch (type) {
             case LOWERCASE:
                 // 随机小写字母
@@ -182,19 +204,6 @@ public enum SecurePasswordGenerator {
                 break;
         }
         return c;
-    }
-
-    public static void main(String[] args) {
-        Set<String> pwdSet = new CopyOnWriteArraySet<>();
-        ExecutorService executorService = new ThreadPoolExecutor(4, Runtime.getRuntime().availableProcessors(),0,TimeUnit.SECONDS,new LinkedBlockingDeque<>());
-
-        for (int i = 0; i < 1000000; i++) {
-            executorService.execute(() -> {
-                String pwd = SecurePasswordGenerator.INSTANCE.generate();
-                pwdSet.add(pwd);
-                LOGGER.info("{} ------------------- {}", pwd, pwdSet.size());
-            });
-        }
     }
 
     /**
