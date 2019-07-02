@@ -163,7 +163,7 @@ public enum SecurePasswordGenerator {
         //随机填充一位密码
         while (pwCharsIndex.size() > 0) {
             int pwIndex = pwCharsIndex.remove(secure.nextInt(pwCharsIndex.size()));
-            Character character = generateSeed(takeTypes.get(secure.nextInt(takeTypes.size())));
+            char character = generateSeed(takeTypes.get(secure.nextInt(takeTypes.size())));
 
             password[pwIndex] = character;
         }
@@ -175,7 +175,7 @@ public enum SecurePasswordGenerator {
      *
      * @param type 要求字符类型
      */
-    private Character generateSeed(CharacterType type) {
+    private char generateSeed(CharacterType type) {
         int seed;
         char c;
         switch (type) {
