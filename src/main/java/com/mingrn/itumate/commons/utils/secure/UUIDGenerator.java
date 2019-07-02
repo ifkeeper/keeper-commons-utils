@@ -1,4 +1,4 @@
-package com.mingrn.itumate.commons.utils.key;
+package com.mingrn.itumate.commons.utils.secure;
 
 import java.util.UUID;
 

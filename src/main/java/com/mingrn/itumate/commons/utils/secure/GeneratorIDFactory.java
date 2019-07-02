@@ -1,4 +1,4 @@
-package com.mingrn.itumate.commons.utils.key;
+package com.mingrn.itumate.commons.utils.secure;
 
 /**
  * 生成id,所有的id生成必须调用该类的下的方法
