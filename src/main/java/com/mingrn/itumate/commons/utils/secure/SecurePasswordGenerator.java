@@ -139,7 +139,7 @@ public enum SecurePasswordGenerator {
      *
      * @return 密码字符串
      */
-    private String generateSecurePassword(int passwordLen, int characterVarious) {
+    private static String generateSecurePassword(int passwordLen, int characterVarious) {
         char[] password = new char[passwordLen];
         List<Integer> pwCharsIndex = new ArrayList<>();
         for (int i = 0; i < password.length; i++) {
@@ -175,7 +175,7 @@ public enum SecurePasswordGenerator {
      *
      * @param type 要求字符类型
      */
-    private char generateSeed(CharacterType type) {
+    private static char generateSeed(CharacterType type) {
         int seed;
         char c;
         switch (type) {
