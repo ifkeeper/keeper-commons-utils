@@ -48,8 +48,8 @@ import java.util.*;
 public class FileUpDownUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileUpDownUtils.class);
-    private static final String TMP_DIR = System.getProperty("java.io.tmpdir");
-    private static final String DEFAULT_FILE_PARAM = "uploadFile";
+    public static final String TMP_DIR = System.getProperty("java.io.tmpdir");
+    public static final String DEFAULT_FILE_PARAM = "uploadFile";
 
     private FileUpDownUtils() {
     }
