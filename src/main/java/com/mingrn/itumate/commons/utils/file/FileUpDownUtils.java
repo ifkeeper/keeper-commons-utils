@@ -131,11 +131,11 @@ public class FileUpDownUtils {
     }
 
     public static void uploadFileToDisk(HttpServletRequest request, File uploadFileSaveDir, String parameterName) throws IOException {
-        UploadFile file = getUploadFile(request, parameterName);
+        FileWrap file = getUploadFile(request, parameterName);
         if (!uploadFileSaveDir.isDirectory() && !uploadFileSaveDir.mkdirs()) {
             throw new IOException("Failed create directory " + uploadFileSaveDir);
         } else {
-            FileUtils.copyFile(file.getFile(), new File(uploadFileSaveDir + "/" + file.getFileName()));
+            FileUtils.copyFile(file.getFile(), new File(uploadFileSaveDir + "/" + file.getName()));
         }
     }
 
@@ -155,13 +155,13 @@ public class FileUpDownUtils {
         return null;
     }
 
-    public static UploadFile getUploadFile(HttpServletRequest request) throws IOException {
+    public static FileWrap getUploadFile(HttpServletRequest request) throws IOException {
         return getUploadFile(request, DEFAULT_FILE_PARAM);
     }
 
-    public static UploadFile getUploadFile(HttpServletRequest request, String parameterName) throws IOException {
+    public static FileWrap getUploadFile(HttpServletRequest request, String parameterName) throws IOException {
         MultipartHttpServletRequest multipartRequest;
-        UploadFile uploadFile = null;
+        FileWrap uploadFile = null;
 
         try {
             multipartRequest = (MultipartHttpServletRequest) request;
@@ -177,15 +177,15 @@ public class FileUpDownUtils {
             File file = new File(fileRealPath);
             file.delete();
             multipartFile.transferTo(file);
-            uploadFile = new UploadFile(fileName, file);
+            uploadFile = new FileWrap(fileName, file);
         }
 
         return uploadFile;
     }
 
-    public static List<UploadFile> getUploadFiles(HttpServletRequest request) throws IOException {
+    public static List<FileWrap> getUploadFiles(HttpServletRequest request) throws IOException {
         MultipartHttpServletRequest multipartRequest;
-        ArrayList<UploadFile> result = new ArrayList<>();
+        ArrayList<FileWrap> result = new ArrayList<>();
         try {
             multipartRequest = (MultipartHttpServletRequest) request;
             Iterator it = multipartRequest.getFileNames();
@@ -199,7 +199,7 @@ public class FileUpDownUtils {
                     File file = new File(fileRealPath);
                     file.delete();
                     multipartFile.transferTo(file);
-                    result.add(new UploadFile(fileName, file));
+                    result.add(new FileWrap(fileName, file));
                 }
             }
         } catch (ClassCastException e) {
