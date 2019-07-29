@@ -9,7 +9,7 @@ import java.io.Serializable;
  * @author MinGRn <br > MinGRn97@gmail.com
  * @date 2019/4/18 10:38
  */
-public class FileWrap implements Serializable {
+public class FileWrapper implements Serializable {
 
     private static final long serialVersionUID = -607514736746905893L;
 
@@ -25,11 +25,11 @@ public class FileWrap implements Serializable {
     /** 文件是否存在*/
     private Boolean exists;
 
-    public FileWrap(File file) {
+    public FileWrapper(File file) {
         this(file.getName(), file);
     }
 
-    public FileWrap(String name, File file) {
+    public FileWrapper(String name, File file) {
         this.name = name;
         this.file = file;
         this.size = this.file.length();
