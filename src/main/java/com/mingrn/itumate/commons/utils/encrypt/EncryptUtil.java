@@ -97,20 +97,16 @@ public class EncryptUtil {
         return null;
     }
 
-
+    /** 加密类型 */
     private enum EncryptTypeEnum {
-        /**
-         * MD5 加密
-         */
+
+        /** MD5 加密 */
         MD5("MD5"),
-        /**
-         * SHA-1 加密
-         */
+
+        /** SHA-1 加密 */
         SHA1("SHA-1"),
 
-        /**
-         * SHA-256 加密
-         */
+        /** SHA-256 加密 */
         SHA256("SHA-256");
 
         private String type;
