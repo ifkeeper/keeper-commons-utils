@@ -4,9 +4,6 @@ package com.mingrn.itumate.commons.utils.encrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-
 /**
  * 加密类,默认使用SHA-256加盐加密
  *
@@ -40,24 +37,6 @@ public class EncryptUtil {
 
     }
 
-
-    /**
-     * 使用SHA-1加密,用户加密用户名密码
-     * <p>
-     * 密码加密规则:
-     * <code>EncryptUtil.encryptWithSHA1(username.trim().toUpperCase().concat("@"+password))</code>
-     * 示例:
-     * <pre>{@code
-     *   String username = "...";
-     *   string password = "...";
-     *
-     *   EncryptUtil.encryptWithUserPassword(username, password);
-     * }</pre>
-     */
-    public static String encryptWithUserPassword(String username, String password) {
-        return encryptWithSHA1((username.trim().toUpperCase()) + "@" + (password.trim()));
-    }
-
     /**
      * 使用SHA-1加密
      */
@@ -65,16 +44,38 @@ public class EncryptUtil {
         return encrypt(strSrc, EncryptTypeEnum.SHA1);
     }
 
-
     /**
-     * base64解码
+     * 使用SHA-256加密,用户加密用户名密码
+     * <p>
+     * 密码加密规则:
+     * <code>EncryptUtil.encryptWithSHA256(username.trim().toUpperCase().concat("@"+password))</code>
+     * 示例:
+     * <pre>{@code
+     *   String username = "...";
+     *   string password = "...";
      *
-     * @param str 解码字符串
+     *   EncryptUtil.encryptWithUserPassword(username, password);
+     * }</pre>
+     *
+     * @param username 用户名
+     * @param pwd      用户密码
+     * @return 加密数据
      */
-    public static String decodeBase64(String str) {
-        return new String(Base64.getDecoder().decode(str), StandardCharsets.UTF_8);
+    public static String encryptWithUserPwd(String username, String pwd) {
+        return encryptWithSHA256((username.trim().toUpperCase()) + "@" + (pwd.trim()));
     }
 
+    /**
+     * 密码校验
+     *
+     * @param username   用户名
+     * @param pwd        用户密码
+     * @param encryptPwd 加密的用户密码
+     * @return 密码是否正确
+     */
+    public static boolean checkedPwd(String username, String pwd, String encryptPwd) {
+        return encryptWithUserPwd(username, pwd).equals(encryptPwd);
+    }
 
     /**
      * 对字符串加密,加密算法使用MD5,SHA-1,SHA-256,默认使用SHA-256
@@ -114,10 +115,5 @@ public class EncryptUtil {
         EncryptTypeEnum(String type) {
             this.type = type;
         }
-    }
-
-    public static void main(String[] args) {
-        System.out.println("username".trim().toUpperCase().concat("@admin123"));
-        System.out.println(encryptWithUserPassword("username","@admin123"));
     }
 }
