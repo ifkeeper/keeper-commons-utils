@@ -72,13 +72,14 @@ import java.util.Objects;
  */
 public final class TripleDesUtil {
 
-    private TripleDesUtil() {
-    }
+    private TripleDesUtil() {}
 
     /**
      * 定义加密算法,可用 DES,DESede,Blowfish
      */
     private static final String ENCRYPT_ALGORITHM = "DESede";
+
+    private static final String HEX_CHARS = "0123456789ABCDEF";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TripleDesUtil.class);
 
@@ -192,6 +193,6 @@ public final class TripleDesUtil {
     }
 
     private static byte charToByte(char c) {
-        return (byte) "0123456789ABCDEF".indexOf(c);
+        return (byte) HEX_CHARS.indexOf(c);
     }
 }
