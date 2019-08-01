@@ -31,10 +31,10 @@ public class Base64UtilTests {
         LOGGER.info("\npwd: {}\nuId: {}\nencrypt: {}\n", pwd, uId, encrypt);
 
         // base64
-        String base64 = Base64Util.encryption(pwd + "@" + encrypt, StandardCharsets.UTF_8);
+        String base64 = Base64Util.encryption(pwd + "@" + encrypt);
         LOGGER.info("\nbase64: {}", base64);
 
-        String desBase64 = Base64Util.decrypt(base64, StandardCharsets.UTF_8);
+        String desBase64 = Base64Util.decrypt(base64);
         LOGGER.info("\ndesBase64: {}", desBase64);
 
         Matcher matcher = TOKEN_PATTERN.matcher(desBase64);
@@ -47,7 +47,7 @@ public class Base64UtilTests {
         }
 
         for (int i = 0; i < 10; i++) {
-            System.out.println(Base64Util.md5(uId));
+            System.out.println(MD5Util.md5DigestAsHex(pwd));
         }
     }
 }
