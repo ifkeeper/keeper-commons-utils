@@ -68,7 +68,7 @@ public class PostUtil {
             throw new RuntimeException(" seq Must be between 1 and 99 ");
         }
 
-        // 获取系统发布时间距当前秒数
+        // 获取系统发布时间距当前秒数, 并进行36进制编码
         long diff = (System.currentTimeMillis() - benchmark) / 1000;
         String base36 = Long.toString(diff, 36);
 
