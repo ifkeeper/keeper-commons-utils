@@ -11,9 +11,9 @@ import java.util.Objects;
  * @author MinGRn <br > MinGRn97@gmail.com
  * @date 2019/10/7 17:18
  */
-public class PostUtil {
+public class PostFeedUtil {
 
-    private PostUtil() {
+    private PostFeedUtil() {
     }
 
     /**
