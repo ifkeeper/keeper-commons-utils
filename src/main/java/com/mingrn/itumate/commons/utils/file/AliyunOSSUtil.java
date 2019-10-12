@@ -26,6 +26,9 @@ import java.util.Objects;
  * {@code bucketName}、{@code accessKeyId}、{@code accessKeySecret}.
  * 具体见 CLASSPATH/META-INFO/spring-configuration-metadata.json
  *
+ * 注意: 在使用时应将该工具类注册为 bean, 如使用 <code>@ComponentScan</code> 组件
+ * 进行扫描该包.
+ *
  * @author MinGRn <br > MinGRn97@gmail.com
  * @date 2019/10/11 13:06
  */
@@ -300,8 +303,10 @@ public class AliyunOSSUtil implements EnvironmentAware {
             OSSObject ossObject = oss.getObject(bucketName, objectName);
             ResponseMessage msg = ossObject.getResponse();
 
-            LOGGER.info(">>>>>>>>>> 是否上传成功: [{}] , 响应状态码: [{}], 内容长度 [{}], 文件Url: [{}] <<<<<<<<<<",
-                    msg.isSuccessful(), msg.getStatusCode(), msg.getContentLength(), msg.getUri());
+            LOGGER.info(">>>>>>>>>> 上传状态  : {} ", msg.isSuccessful() ? "成功" : "失败");
+            LOGGER.info(">>>>>>>>>> 响应状态码: {} ", msg.getStatusCode());
+            LOGGER.info(">>>>>>>>>> 文件流长度: {} ", msg.getContentLength());
+            LOGGER.info(">>>>>>>>>> 文件Url  : {} ", msg.getUri());
 
             return msg.getUri();
         } finally {
