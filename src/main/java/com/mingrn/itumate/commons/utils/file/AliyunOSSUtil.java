@@ -9,10 +9,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import javax.validation.constraints.NotNull;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -28,15 +32,18 @@ import java.util.Objects;
 @Component
 public class AliyunOSSUtil implements EnvironmentAware {
 
+    private AliyunOSSUtil() {
+    }
+
     private static Environment environment;
 
     /** 阿里云容器地址, 容器, 账号, 密匙 */
     private static String endpoint, bucketName, accessKeyId, accessKeySecret = null;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AliyunOSSUtil.class);
+    /** 防盗链 */
+    private static List<String> bucketRefererList = null;
 
-    private AliyunOSSUtil() {
-    }
+    private static final Logger LOGGER = LoggerFactory.getLogger(AliyunOSSUtil.class);
 
     @Override
     public void setEnvironment(Environment environment) {
@@ -45,6 +52,23 @@ public class AliyunOSSUtil implements EnvironmentAware {
         bucketName = environment.getProperty("aliyun.oss.bucketName");
         accessKeyId = environment.getProperty("aliyun.oss.accessKeyId");
         accessKeySecret = environment.getProperty("aliyun.oss.accessKeySecret");
+        String bucketReferer = environment.getProperty("aliyun.oss.bucketReferer");
+        if (!StringUtils.isEmpty(bucketReferer)){
+            bucketRefererList = new ArrayList<>(Arrays.asList(bucketReferer.split(",")));
+        }
+    }
+
+    /**
+     * 阿里云 Bucket 创建
+     *
+     * <br>阿里云OSS没有文件夹概念,在存储时 {@literal bucketName} 相当于三级域名.
+     * 例如, 存储的阿里云OSS Endpoint 是: oss-cn-hangzhou.aliyuncs.com, 设置 bucketName 后
+     * 即可使用链接 http(s)://bucketName.oss-cn-hangzhou.aliyuncs.com 进行访问.
+     *
+     * @return {@linkplain true} 创建成功, {@linkplain false} 创建失败
+     */
+    public static boolean createBucket() {
+        return createBucket(bucketName);
     }
 
     /**
@@ -57,7 +81,7 @@ public class AliyunOSSUtil implements EnvironmentAware {
      * @param bucketName 文件存储容器, 三级域名
      * @return {@linkplain true} 创建成功, {@linkplain false} 创建失败
      */
-    public static boolean createBucket(String bucketName) {
+    public static boolean createBucket(@NotNull String bucketName) {
         LOGGER.info(">>>>>>>>>> 请求创建阿里云OSS Bucket[{}] <<<<<<<<<<", bucketName);
         LOGGER.info(">>>>>>>>>> 正在请求登录阿里云OSS <<<<<<<<<<");
         OSS oss = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret);
@@ -71,16 +95,69 @@ public class AliyunOSSUtil implements EnvironmentAware {
 
     private static boolean createBucket(OSS oss, CreateBucketRequest request) {
 
+        if (Objects.isNull(request) || StringUtils.isEmpty(request.getBucketName())) {
+            throw new IllegalArgumentException("阿里云 bucketName 不能为空");
+        }
+
         if (!oss.doesBucketExist(bucketName)) {
             LOGGER.info("阿里云OSS Bucket[{}] 不存在, 进行创建 Bucket: {}", bucketName, bucketName);
-            if (Objects.isNull(request) || StringUtils.isEmpty(request.getBucketName())) {
-                throw new IllegalArgumentException("阿里云 bucketName 不能为空");
-            }
             oss.createBucket(request);
+            setBucketReferer(oss, request.getBucketName());
         } else {
             LOGGER.info("阿里云OSS Bucket[{}] 已存在, 无需进行创建", bucketName);
         }
         return oss.doesBucketExist(bucketName);
+    }
+
+    /**
+     * bucket 设置防盗链
+     *
+     * <br>防盗链通过 {@link #bucketRefererList refererList} 设置白名单, 设置后
+     * 仅允许指定的域名访问 OSS 资源.
+     * 注意: 当 {@link #bucketRefererList refererList} 不为空时表示设置防盗链.
+     * 具体有关防盗链见阿里云OSS官方文档:
+     * <a href="https://help.aliyun.com/document_detail/31869.html?spm=a2c4g.11186623.6.605.41d11537aTkaVE">设置防盗链</a>
+     *
+     * @return {@linkplain true} 防盗链设置成功, {@linkplain false} 设置失败
+     */
+    public static boolean setBucketReferer() {
+        return setBucketReferer(bucketName);
+    }
+
+    public static boolean setBucketReferer(String bucketName) {
+        LOGGER.info(">>>>>>>>>> 请求设置阿里云OSS Bucket[{}] 防盗链 <<<<<<<<<<", bucketName);
+        LOGGER.info(">>>>>>>>>> 正在请求登录阿里云OSS <<<<<<<<<<");
+        OSS oss = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret);
+        try {
+            checkedOSSEnvironment();
+            return setBucketReferer(oss, bucketName);
+        } finally {
+            oss.shutdown();
+            LOGGER.info(">>>>>>>>>> 阿里云OSS文件上传完成, 关闭连接 <<<<<<<<<<");
+        }
+    }
+
+    public static boolean setBucketReferer(OSS oss, String bucketName) {
+        return setBucketReferer(oss, bucketName, bucketRefererList);
+    }
+
+    public static boolean setBucketReferer(OSS oss, String bucketName, List<String> bucketRefererList) {
+
+        BucketReferer referer;
+        SetBucketRefererRequest refererRequest;
+        LOGGER.info(">>>>>>>>>> 正在设置阿里云OSS bucket[ {} ] 防盗链 <<<<<<<<<<", bucketName);
+        if (!CollectionUtils.isEmpty(bucketRefererList) && bucketRefererList.size() > 0) {
+            referer = new BucketReferer(false, bucketRefererList);
+            refererRequest = new SetBucketRefererRequest(bucketName, referer);
+        } else {
+            referer = new BucketReferer();
+            refererRequest = new SetBucketRefererRequest(bucketName, referer);
+        }
+        oss.setBucketReferer(refererRequest);
+
+        List<String> refererList = oss.getBucketReferer(bucketName).getRefererList();
+        LOGGER.info(">>>>>>>>>> 阿里云OSS bucket[{}] 防盗链[ {} ]设置完成 <<<<<<<<<<", bucketName, refererList.toString());
+        return !CollectionUtils.isEmpty(refererList) && refererList.size() > 0;
     }
 
     /**
@@ -89,11 +166,18 @@ public class AliyunOSSUtil implements EnvironmentAware {
      * <br>危险操作, bucket 一旦删除该 bucket 下的所有文件都将被清除.并且无法恢复, 在调用该方法之前
      * 请确保该 bucket 下无文件或已做好备份操作.
      *
-     * @param bucketName 文件存储容器, 三级域名
      * @return {@linkplain true} 删除成功, {@linkplain false} 删除失败
      */
     @Deprecated
-    public static boolean deleteBucket(String bucketName) {
+    public static boolean deleteBucket() {
+        return deleteBucket(bucketName);
+    }
+
+    /**
+     * @param bucketName 文件存储容器, 三级域名
+     */
+    @Deprecated
+    public static boolean deleteBucket(@NotNull String bucketName) {
         LOGGER.info(">>>>>>>>>> 请求删除阿里云OSS Bucket[{}] <<<<<<<<<<", bucketName);
         LOGGER.info(">>>>>>>>>> 正在请求登录阿里云OSS <<<<<<<<<<");
         OSS oss = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret);
@@ -105,7 +189,7 @@ public class AliyunOSSUtil implements EnvironmentAware {
         }
     }
 
-    private static boolean deleteBucket(OSS oss, String bucketName) {
+    private static boolean deleteBucket(OSS oss, @NotNull String bucketName) {
 
         if (!oss.doesBucketExist(bucketName)) {
             LOGGER.info("阿里云OSS Bucket[{}] 不存在, 无需进行删除", bucketName);
@@ -134,17 +218,29 @@ public class AliyunOSSUtil implements EnvironmentAware {
      * @param file       文件流
      * @return 文件上传地址
      */
-    public static String putObject(String objectName, InputStream file) {
-        return putObject(objectName, null, file);
+    public static String putObject(@NotNull String objectName, InputStream file) {
+        return putObject(bucketName, objectName, file);
+    }
+
+    /**
+     * 阿里云文件上传
+     *
+     * @param bucketName 文件存储容器, 三级域名
+     * @return 文件上传地址
+     * @see #putObject(String, InputStream)
+     */
+    public static String putObject(@NotNull String bucketName, @NotNull String objectName, InputStream file) {
+        return putObject(bucketName, objectName, null, file);
     }
 
     /**
      * 阿里云文件上传
      *
      * @param metadata 自定义原数据信息
+     * @return 文件上传地址
      * @see #putObject(String, InputStream)
      */
-    public static String putObject(String objectName, ObjectMetadata metadata, InputStream file) {
+    public static String putObject(@NotNull String bucketName, @NotNull String objectName, ObjectMetadata metadata, InputStream file) {
 
         if (StringUtils.isEmpty(objectName)) {
             throw new IllegalArgumentException("阿里云OSS文件名 [" + objectName + "] 不能为空");
@@ -221,7 +317,9 @@ public class AliyunOSSUtil implements EnvironmentAware {
         }
     }
 
-    /** 检查阿里云 OSS 认证信息 */
+    /**
+     * 检查阿里云 OSS 认证信息
+     */
     private static void checkedOSSEnvironment() {
         LOGGER.info(">>>>>>>>>> 正在检查阿里云OSS授权认证信息 <<<<<<<<<<");
         if (StringUtils.isEmpty(endpoint)) {

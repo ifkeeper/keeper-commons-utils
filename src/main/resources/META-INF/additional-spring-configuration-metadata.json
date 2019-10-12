@@ -19,6 +19,11 @@
       "name": "aliyun.oss.accessKeySecret",
       "type": "java.lang.String",
       "description": "阿里云OSS授权密匙"
+    },
+    {
+      "name": "aliyun.oss.bucketReferer",
+      "type": "java.util.List",
+      "description": "阿里云OSS bucket 防盗链,多个请使用英文逗号做分隔. 如: https://www.aliyun.com/,https://www.example.com/ "
     }
   ]
 }
