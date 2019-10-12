@@ -35,19 +35,21 @@ public class AliyunOSSUtil implements EnvironmentAware {
     private AliyunOSSUtil() {
     }
 
-    private static Environment environment;
-
-    /** 阿里云容器地址, 容器, 账号, 密匙 */
-    private static String endpoint, bucketName, accessKeyId, accessKeySecret = null;
-
-    /** 防盗链 */
+    /** 阿里云OSS 端点 */
+    private static String endpoint = null;
+    /** 阿里云 bucket 名称, 即三级域名 */
+    private static String bucketName = null;
+    /** 阿里云OSS 授权账号, 建议 RAM 授权 */
+    private static String accessKeyId = null;
+    /** 阿里云OSS 授权密匙, 建议 RAM 授权 */
+    private static String accessKeySecret = null;
+    /** 防盗链, 即访问白名单, 如 https://*.example.com */
     private static List<String> bucketRefererList = null;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AliyunOSSUtil.class);
 
     @Override
     public void setEnvironment(Environment environment) {
-        AliyunOSSUtil.environment = environment;
         endpoint = environment.getProperty("aliyun.oss.endpoint");
         bucketName = environment.getProperty("aliyun.oss.bucketName");
         accessKeyId = environment.getProperty("aliyun.oss.accessKeyId");
@@ -86,25 +88,34 @@ public class AliyunOSSUtil implements EnvironmentAware {
         LOGGER.info(">>>>>>>>>> 正在请求登录阿里云OSS <<<<<<<<<<");
         OSS oss = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret);
         try {
-            checkedOSSEnvironment();
+            checkedOssEnvironment();
             return createBucket(oss, new CreateBucketRequest(bucketName));
         } finally {
             oss.shutdown();
+            LOGGER.info(">>>>>>>>>> 阿里云OSS Bucket[{}] 创建完成, 关闭连接 <<<<<<<<<<", bucketName);
         }
     }
 
-    private static boolean createBucket(OSS oss, CreateBucketRequest request) {
+    public static boolean createBucket(OSS oss, CreateBucketRequest request) {
+        return createBucket(oss, request, CannedAccessControlList.Default);
+    }
+
+    public static boolean createBucket(OSS oss, CreateBucketRequest request, CannedAccessControlList controlList) {
 
         if (Objects.isNull(request) || StringUtils.isEmpty(request.getBucketName())) {
             throw new IllegalArgumentException("阿里云 bucketName 不能为空");
         }
 
-        if (!oss.doesBucketExist(bucketName)) {
-            LOGGER.info("阿里云OSS Bucket[{}] 不存在, 进行创建 Bucket: {}", bucketName, bucketName);
+        if (!oss.doesBucketExist(request.getBucketName())) {
+            LOGGER.info("阿里云OSS Bucket[{}] 不存在, 进行创建 Bucket: {}", request.getBucketName(), request.getBucketName());
+            // 创建 bucket
             oss.createBucket(request);
+            // 设置白名单
             setBucketReferer(oss, request.getBucketName());
+            // 设置访问权限
+            setBucketAcl(oss, request.getBucketName(), controlList);
         } else {
-            LOGGER.info("阿里云OSS Bucket[{}] 已存在, 无需进行创建", bucketName);
+            LOGGER.info("阿里云OSS Bucket[{}] 已存在, 无需进行创建", request.getBucketName());
         }
         return oss.doesBucketExist(bucketName);
     }
@@ -129,7 +140,7 @@ public class AliyunOSSUtil implements EnvironmentAware {
         LOGGER.info(">>>>>>>>>> 正在请求登录阿里云OSS <<<<<<<<<<");
         OSS oss = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret);
         try {
-            checkedOSSEnvironment();
+            checkedOssEnvironment();
             return setBucketReferer(oss, bucketName);
         } finally {
             oss.shutdown();
@@ -161,6 +172,32 @@ public class AliyunOSSUtil implements EnvironmentAware {
     }
 
     /**
+     * 设置 bucket 访问权限值
+     */
+    public static void setBucketAcl(){
+        LOGGER.info(">>>>>>>>>> 请求设置阿里云OSS Bucket[{}] 访问权限 <<<<<<<<<<", bucketName);
+        LOGGER.info(">>>>>>>>>> 正在请求登录阿里云OSS <<<<<<<<<<");
+        OSS oss = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret);
+        try {
+            checkedOssEnvironment();
+            setBucketAcl(oss, bucketName);
+        } finally {
+            oss.shutdown();
+            LOGGER.info(">>>>>>>>>> 阿里云OSS bucket[{}] 权限设置完成, 关闭连接 <<<<<<<<<<", bucketName);
+        }
+    }
+
+    public static void setBucketAcl(OSS oss, String bucketName){
+        setBucketAcl(oss, bucketName, CannedAccessControlList.Default);
+    }
+
+    public static void setBucketAcl(OSS oss, String bucketName, CannedAccessControlList controlList) {
+        LOGGER.info(">>>>>>>>>> 正在设置阿里云OSS bucket[{}] 权限, 权限值:[{}] <<<<<<<<<<", bucketName, controlList.toString());
+        SetBucketAclRequest aclRequest = new SetBucketAclRequest(bucketName, controlList);
+        oss.setBucketAcl(aclRequest);
+    }
+
+    /**
      * 删除阿里云 bucket
      *
      * <br>危险操作, bucket 一旦删除该 bucket 下的所有文件都将被清除.并且无法恢复, 在调用该方法之前
@@ -182,7 +219,7 @@ public class AliyunOSSUtil implements EnvironmentAware {
         LOGGER.info(">>>>>>>>>> 正在请求登录阿里云OSS <<<<<<<<<<");
         OSS oss = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret);
         try {
-            checkedOSSEnvironment();
+            checkedOssEnvironment();
             return deleteBucket(oss, bucketName);
         } finally {
             oss.shutdown();
@@ -247,7 +284,7 @@ public class AliyunOSSUtil implements EnvironmentAware {
         }
 
         LOGGER.info(">>>>>>>>>> 请求阿里云OSS文件上传 <<<<<<<<<<");
-        checkedOSSEnvironment();
+        checkedOssEnvironment();
         LOGGER.info(">>>>>>>>>> 正在请求登录阿里云OSS <<<<<<<<<<");
         OSS oss = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret);
         try {
@@ -290,7 +327,7 @@ public class AliyunOSSUtil implements EnvironmentAware {
         }
 
         LOGGER.info(">>>>>>>>>> 请求删除阿里云OSS文件 <<<<<<<<<<");
-        checkedOSSEnvironment();
+        checkedOssEnvironment();
         LOGGER.info(">>>>>>>>>> 正在请求登录阿里云OSS <<<<<<<<<<");
         OSS oss = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret);
         try {
@@ -320,7 +357,7 @@ public class AliyunOSSUtil implements EnvironmentAware {
     /**
      * 检查阿里云 OSS 认证信息
      */
-    private static void checkedOSSEnvironment() {
+    private static void checkedOssEnvironment() {
         LOGGER.info(">>>>>>>>>> 正在检查阿里云OSS授权认证信息 <<<<<<<<<<");
         if (StringUtils.isEmpty(endpoint)) {
             throw new IllegalArgumentException("You Do not Set aliyun OSS access Endpoint( Endpoint Can't be set to Null or Empty ), " +
