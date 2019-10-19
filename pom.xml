@@ -21,6 +21,10 @@
         <xstream.version>1.4.10</xstream.version>
         <!--阿里云 OSS-->
         <aliyun.oss>3.6.0</aliyun.oss>
+        <!--pdf-->
+        <itextpdf.version>5.5.13</itextpdf.version>
+        <itextpdf.asian.version>5.2.0</itextpdf.asian.version>
+        <xhtmlrenderer.version>9.1.16</xhtmlrenderer.version>
     </properties>
 
     <dependencies>
@@ -38,6 +42,28 @@
             <groupId>com.aliyun.oss</groupId>
             <artifactId>aliyun-sdk-oss</artifactId>
             <version>${aliyun.oss}</version>
+        </dependency>
+
+        <!-- pdf iText -->
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>itextpdf</artifactId>
+            <version>${itextpdf.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.itextpdf.tool</groupId>
+            <artifactId>xmlworker</artifactId>
+            <version>${itextpdf.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>itext-asian</artifactId>
+            <version>${itextpdf.asian.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.xhtmlrenderer</groupId>
+            <artifactId>flying-saucer-pdf-itext5</artifactId>
+            <version>${xhtmlrenderer.version}</version>
         </dependency>
     </dependencies>
 
