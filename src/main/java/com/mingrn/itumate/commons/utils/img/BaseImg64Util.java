@@ -6,9 +6,11 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
 
 import javax.imageio.ImageIO;
+import javax.validation.constraints.NotNull;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
@@ -22,6 +24,11 @@ import java.util.Objects;
  */
 public class BaseImg64Util {
 
+    private static final String BASE64_PREFIX_GIF = "data:image/gif;base64,";
+    private static final String BASE64_PREFIX_PNG = "data:image/png;base64,";
+    private static final String BASE64_PREFIX_JPEG = "data:image/jpeg;base64,";
+    private static final String BASE64_PREFIX_ICON = "data:image/x-icon;base64,";
+
     private static final Logger LOGGER = LoggerFactory.getLogger(BaseImg64Util.class);
 
     /**
@@ -33,7 +40,8 @@ public class BaseImg64Util {
     public static String getBaseImg64StrFromDisk(String imgPath) {
         Objects.requireNonNull(imgPath, "IMG Path Can't be bull");
         try (InputStream inputStream = new FileInputStream(imgPath)) {
-            return imgIOTransform2Base64(inputStream);
+            String suffix = imgPath.substring(imgPath.lastIndexOf(".") + 1);
+            return imgIOTransform2Base64(inputStream, suffix);
         } catch (IOException e) {
             LOGGER.error("Image file IO Read Exception", e);
         }
@@ -56,8 +64,9 @@ public class BaseImg64Util {
         connection.setRequestProperty("Charset", "UTF-8");
         connection.setRequestMethod("GET");
 
-        try (InputStream inputStream = connection.getInputStream();) {
-            return imgIOTransform2Base64(inputStream);
+        try (InputStream inputStream = connection.getInputStream()) {
+            String suffix = uri.substring(uri.lastIndexOf(".") + 1);
+            return imgIOTransform2Base64(inputStream, suffix);
         } catch (Exception e) {
             LOGGER.error("Read IMG IO From Net Exception", e);
         }
@@ -79,9 +88,10 @@ public class BaseImg64Util {
         Objects.requireNonNull(uri, "Net Img Uri Can't be null");
 
         try (CloseableHttpClient httpClient = HttpClientBuilder.create().build()) {
+            String suffix = uri.substring(uri.lastIndexOf(".") + 1);
             HttpUriRequest uriRequest = RequestBuilder.get(uri).build();
             InputStream inputStream = httpClient.execute(uriRequest).getEntity().getContent();
-            return imgIOTransform2Base64(inputStream);
+            return imgIOTransform2Base64(inputStream, suffix);
         } catch (IOException e) {
             LOGGER.error("read image io from net err >>>>", e);
         }
@@ -111,10 +121,11 @@ public class BaseImg64Util {
     /**
      * IMG IO 转 Base64 Str(URLEncoder)
      *
-     * @param img IMG inputStream
+     * @param img       IMG inputStream
+     * @param imgFormat IMG Format
      * @return base64Img String
      */
-    public static String imgIOTransform2Base64(InputStream img) {
+    public static String imgIOTransform2Base64(InputStream img, String imgFormat) {
         // 读取图片字节数组
         byte[] data = null;
         try {
@@ -124,7 +135,7 @@ public class BaseImg64Util {
         } catch (IOException e) {
             LOGGER.error("Image load stream err", e);
         }
-        return byteArr2Base64(data);
+        return getBase64Prefix(imgFormat) + byteArr2Base64(data);
     }
 
     /**
@@ -144,5 +155,58 @@ public class BaseImg64Util {
             LOGGER.error("byte[] transform to base64 img str exception", e);
         }
         return null;
+    }
+
+    /**
+     * Base64 Str 转 OutputStream
+     *
+     * @param base64       IMG Base64 字符串
+     * @param outputStream 输出流
+     */
+    public static void base642Input(@NotNull String base64, OutputStream outputStream){
+        Objects.requireNonNull(base64, "base64 img str can't be null");
+        try {
+            byte[] data = base642Input(base64);
+            assert data != null;
+            outputStream.write(data);
+            outputStream.flush();
+            outputStream.close();
+        } catch (IOException e) {
+            LOGGER.error("base64 str transform to bute[] exception", e);
+        }
+    }
+
+    /**
+     * Base64 Str 转 byte[]
+     *
+     * @param base64 IMG Base64 字符串
+     * @return byte[]
+     */
+    public static byte[] base642Input(@NotNull String base64){
+        Objects.requireNonNull(base64, "base64 img str can't be null");
+        try {
+            base64 = base64.replaceAll("^data:image\\/[\\w]+;base64,", "");
+            BASE64Decoder decoder = new BASE64Decoder();
+            byte[] data = decoder.decodeBuffer(base64);
+            for (int i = 0; i < data.length; i++) {
+                if (data[i] < 0) data[i] += 256;
+            }
+            return data;
+        } catch (IOException e) {
+            LOGGER.error("base64 str transform to OutputStream exception", e);
+        }
+        return null;
+    }
+
+    private static String getBase64Prefix(String format) {
+        if ("gif".equalsIgnoreCase(format)) {
+            return BASE64_PREFIX_GIF;
+        } else if ("png".equalsIgnoreCase(format)) {
+            return BASE64_PREFIX_PNG;
+        } else if ("icon".equalsIgnoreCase(format)) {
+            return BASE64_PREFIX_ICON;
+        } else {
+            return BASE64_PREFIX_JPEG;
+        }
     }
 }
