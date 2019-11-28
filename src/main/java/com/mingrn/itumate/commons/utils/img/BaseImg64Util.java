@@ -6,6 +6,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.Base64Utils;
 import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
 
@@ -163,39 +164,30 @@ public class BaseImg64Util {
      * @param base64       IMG Base64 字符串
      * @param outputStream 输出流
      */
-    public static void base642Input(@NotNull String base64, OutputStream outputStream){
-        Objects.requireNonNull(base64, "base64 img str can't be null");
-        try {
-            byte[] data = base642Input(base64);
-            assert data != null;
-            outputStream.write(data);
+    public static void base642Input(@NotNull String base64, OutputStream outputStream) {
+        try (InputStream data = base642Input(base64)) {
+            int len;
+            byte[] bytes = new byte[1024];
+            while ((len = data.read(bytes)) != -1) {
+                outputStream.write(bytes, 0, len);
+            }
             outputStream.flush();
             outputStream.close();
         } catch (IOException e) {
-            LOGGER.error("base64 str transform to bute[] exception", e);
+            LOGGER.error(e.getMessage(), e);
         }
     }
 
     /**
-     * Base64 Str 转 byte[]
+     * Base64 Str 转 InputStream
      *
      * @param base64 IMG Base64 字符串
-     * @return byte[]
+     * @return {@link InputStream}
      */
-    public static byte[] base642Input(@NotNull String base64){
+    public static InputStream base642Input(@NotNull String base64) {
         Objects.requireNonNull(base64, "base64 img str can't be null");
-        try {
-            base64 = base64.replaceAll("^data:image\\/[\\w]+;base64,", "");
-            BASE64Decoder decoder = new BASE64Decoder();
-            byte[] data = decoder.decodeBuffer(base64);
-            for (int i = 0; i < data.length; i++) {
-                if (data[i] < 0) data[i] += 256;
-            }
-            return data;
-        } catch (IOException e) {
-            LOGGER.error("base64 str transform to OutputStream exception", e);
-        }
-        return null;
+        base64 = base64.replaceAll("^data:image\\/[\\w]+;base64,", "");
+        return new ByteArrayInputStream(Base64Utils.decodeFromString(base64));
     }
 
     private static String getBase64Prefix(String format) {
