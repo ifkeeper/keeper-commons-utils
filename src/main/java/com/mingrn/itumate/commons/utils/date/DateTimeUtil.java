@@ -194,4 +194,21 @@ public class DateTimeUtil {
         DateTime dateTime2 = new DateTime(refer);
         return dateTime1.compareTo(dateTime2) > 0;
     }
+
+    /**
+     * 时间大小比较
+     * <p>
+     * date1 大于 date2 返回 1
+     * date1 小于 date2 返回 -1
+     * data1 等于 date2 返回 0
+     *
+     * @param target 目标时间
+     * @param refer  参考时间
+     * @return date1 > date2
+     */
+    public static boolean compare(String target, String refer) {
+        DateTime dateTime1 = new DateTime(target);
+        DateTime dateTime2 = new DateTime(refer);
+        return dateTime1.compareTo(dateTime2) > 0;
+    }
 }
