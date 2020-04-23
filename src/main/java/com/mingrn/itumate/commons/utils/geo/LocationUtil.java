@@ -78,8 +78,7 @@ public class LocationUtil {
 	 */
 	private static void distanceBetweenLocation(Double startLng, Double startLat, Double endLng, Double endLat) {
 		try (CloseableHttpClient httpClient = HttpClientBuilder.create().build()) {
-			StringBuilder builderPoint = new StringBuilder(String.valueOf(startLng))
-					.append(",").append(startLat).append(";").append(endLng).append(",").append(endLat);
+			String builderPoint = startLng + "," + startLat + ";" + endLng + "," + endLat;
 			HttpUriRequest uriRequest = RequestBuilder.get(WAY_POINTS_DISTANCE_URL + builderPoint).build();
 			result(httpClient, uriRequest);
 		} catch (IOException e) {
